@@ -52,8 +52,14 @@
                     <button class="theme-btn active" data-theme="review">📝 Review</button>
                     <button class="theme-btn" data-theme="funny">😂 Hài Hước</button>
                     <button class="theme-btn" data-theme="story">📖 Kể Chuyện</button>
-                    <button class="theme-btn" data-theme="drama">🎭 Drama/Giật gân</button>
+                    <button class="theme-btn" data-theme="drama">🎭 Drama</button>
                     <button class="theme-btn" data-theme="knowledge">💡 Kiến thức</button>
+                    <button class="theme-btn" data-theme="custom" style="border-color: var(--accent);">✨ Tự đề xuất (Prompt)</button>
+                </div>
+                
+                <!-- Khu vực nhập Prompt Tùy chỉnh (ẩn mặc định) -->
+                <div id="customThemeContainer" class="hidden mt-3" style="animation: fadeInDown 0.3s ease;">
+                    <textarea id="customThemeInput" placeholder="VD: Hãy viết cap bán hàng quần áo thể thao nhắm đến GenZ, giọng điệu teen và chèn thật nhiều icon liên quan..." style="height: 100px; background: rgba(0,0,0,0.3); border: 1px dashed var(--accent); border-radius: 10px;"></textarea>
                 </div>
 
                 <button class="generate-btn" id="generateBtn">

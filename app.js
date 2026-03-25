@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeMediaBtn = document.getElementById('removeMediaBtn');
     
     const themeBtns = document.querySelectorAll('.theme-btn');
+    const customThemeContainer = document.getElementById('customThemeContainer');
+    const customThemeInput = document.getElementById('customThemeInput');
     const generateBtn = document.getElementById('generateBtn');
     
     const resultPanel = document.getElementById('resultPanel');
@@ -107,6 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
             themeBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentTheme = btn.dataset.theme;
+            
+            if (currentTheme === 'custom') {
+                customThemeContainer.classList.remove('hidden');
+            } else {
+                customThemeContainer.classList.add('hidden');
+            }
         });
     });
 
@@ -236,7 +244,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Generate Logic API Call ===
     async function generateContentAI(apiKey, imageBase, theme) {
-        const themeContext = themePrompts[theme];
+        let themeContext = '';
+        if (theme === 'custom') {
+            const val = customThemeInput.value.trim();
+            themeContext = val ? `Viết nội dung theo yêu cầu sau của người dùng: "${val}"` : "Viết nội dung tự do, sáng tạo về bức hình.";
+        } else {
+            themeContext = themePrompts[theme];
+        }
+
         const promptText = `Bạn là một chuyên gia sáng tạo nội dung mạng xã hội (Viral Content Creator) hàng đầu. Hãy quan sát bức ảnh đính kèm và:\n${themeContext}\n\nHãy viết một bài đăng Facebook/TikTok hoàn chỉnh khoảng 10-15 câu ngắn ngọn, có emoji và hashtags phù hợp, lôi cuốn được người xem. Trả về ĐÚNG phần nội dung caption, tuyệt đối không thêm câu dạ vâng, chào hỏi hay phân tích.`;
 
         // Parse base64
