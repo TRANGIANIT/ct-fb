@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Studio</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="glass-background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <div class="header-top" style="display: flex; justify-content: flex-end; width: 100%;">
+                <button class="settings-btn" id="settingsBtn" title="Cài đặt API"><i class="fa-solid fa-gear"></i> Cấu hình AI</button>
+            </div>
+            <h1>AI Content <span class="gradient-text">Studio</span></h1>
+            <p>Biến mọi hình ảnh/video thành nội dung viral trên mạng xã hội chỉ với một cú click.</p>
+        </header>
+
+        <main class="app-grid">
+            <!-- Left panel: Upload & Settings -->
+            <section class="panel input-panel glass-panel">
+                <div class="section-title">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Tải lên Media
+                </div>
+                
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+                    <div class="upload-content" id="uploadContent">
+                        <i class="fa-solid fa-file-image"></i>
+                        <p>Kéo thả ảnh/video vào đây hoặc <span>chọn file</span></p>
+                    </div>
+                    <!-- Preview Container -->
+                    <div class="preview-container hidden" id="previewContainer">
+                        <div id="mediaPreview"></div>
+                        <button class="remove-btn" id="removeMediaBtn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <div class="section-title mt-4">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Chọn Chủ Đề (Vibe)
+                </div>
+                <div class="theme-selector" id="themeSelector">
+                    <button class="theme-btn active" data-theme="review">📝 Review</button>
+                    <button class="theme-btn" data-theme="funny">😂 Hài Hước</button>
+                    <button class="theme-btn" data-theme="story">📖 Kể Chuyện</button>
+                    <button class="theme-btn" data-theme="drama">🎭 Drama/Giật gân</button>
+                    <button class="theme-btn" data-theme="knowledge">💡 Kiến thức</button>
+                </div>
+
+                <button class="generate-btn" id="generateBtn">
+                    <span class="btn-text">Tạo Nội Dung AI</span> <i class="fa-solid fa-arrow-right"></i>
+                    <div class="loader hidden"></div>
+                </button>
+            </section>
+
+            <!-- Right panel: Results -->
+            <section class="panel result-panel glass-panel hidden" id="resultPanel">
+                <div class="section-title">
+                    <i class="fa-solid fa-sparkles"></i> Kết Quả Tạo
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-header">
+                        <span><i class="fa-brands fa-facebook"></i> Nội dung bài đăng (Caption)</span>
+                        <button class="icon-btn" id="copyBtn" title="Sao chép"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <textarea id="resultText" placeholder="Nội dung sẽ xuất hiện ở đây..."></textarea>
+                </div>
+
+                <div class="result-box mt-3">
+                    <div class="result-header">
+                        <span><i class="fa-solid fa-microphone-lines"></i> Giọng đọc AI (Audio)</span>
+                        <button class="icon-btn" id="downloadAudioBtn" title="Tải Audio"><i class="fa-solid fa-download"></i></button>
+                    </div>
+                    <div class="custom-audio-player">
+                        <button class="play-btn" id="playAudioBtn"><i class="fa-solid fa-play"></i></button>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBarBg">
+                                <div class="progress" id="audioProgress"></div>
+                            </div>
+                            <div class="time-info"><span id="currentTimeDisplay">0:00</span> / <span>0:15</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons mt-4">
+                    <button class="export-btn primary" id="exportContentBtn">
+                        <i class="fa-solid fa-share-nodes"></i> Xuất File & Đăng FB
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gear"></i> Cấu hình API</h2>
+                <button class="icon-btn" id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Nhập <strong>Google Gemini API Key</strong> từ AI Studio để phân tích hình ảnh/video (Bắt buộc).
+                </p>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="apiKeyInput" style="color: var(--accent);">🔑 Gemini API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+                </div>
+                
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                    <strong>[Nâng cấp Giọng Đọc]</strong> Chọn 1 trong 2 hệ thống sau để Tải được Audio & có giọng tự nhiên nhất:
+                </p>
+                
+                <!-- OpenAI Config -->
+                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <label for="openaiKeyInput" style="color: #00F0FF;">1. Lựa chọn OpenAI (Nhiều tùy chọn giọng)</label>
+                        <input type="password" id="openaiKeyInput" placeholder="sk-proj-..." autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="openaiVoiceSelect">Chọn Giọng OpenAI:</label>
+                        <select id="openaiVoiceSelect" style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.8rem; color: white;">
+                            <option value="nova">Nova (Nữ - Truyền cảm, Tự nhiên)</option>
+                            <option value="shimmer">Shimmer (Nữ - Ấm áp, Rõ ràng)</option>
+                            <option value="alloy">Alloy (Nam - Trung tính, Chuẩn)</option>
+                            <option value="echo">Echo (Nam - Vang, Mạnh mẽ)</option>
+                            <option value="fable">Fable (Nam - Kể chuyện Âu)</option>
+                            <option value="onyx">Onyx (Nam - Trầm, Sâu sắc)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ElevenLabs Config -->
+                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px;">
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <label for="elevenlabsKeyInput" style="color: #FF0080;">2. Lựa chọn ElevenLabs (Siêu chân thực & Upload Giọng)</label>
+                        <input type="password" id="elevenlabsKeyInput" placeholder="Nhập API Key ElevenLabs..." autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="elevenlabsVoiceId">Voice ID (Mặc định hoặc ID giọng bạn tự tạo/upload):</label>
+                        <input type="text" id="elevenlabsVoiceId" placeholder="VD: pNInz6obpgDQGcFmaJcg" value="pNInz6obpgDQGcFmaJcg" autocomplete="off">
+                        <small style="color: #888; font-size: 0.8rem;">Bạn có thể lên trang ElevenLabs.io, upload giọng của chính mình (Voice Cloning), copy Voice ID dán vào đây để AI copy giọng mượt 100%.</small>
+                    </div>
+                </div>
+                
+                <button class="export-btn primary" id="saveKeyBtn" style="margin-top: 1.5rem;">Lưu Cấu Hình API</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
