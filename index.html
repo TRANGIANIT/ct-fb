@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Content Studio</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=6">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,15 +33,23 @@
                 </div>
                 
                 <div class="upload-zone" id="uploadZone">
-                    <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+                    <input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
                     <div class="upload-content" id="uploadContent">
                         <i class="fa-solid fa-file-image"></i>
                         <p>Kéo thả ảnh/video vào đây hoặc <span>chọn file</span></p>
                     </div>
                     <!-- Preview Container -->
                     <div class="preview-container hidden" id="previewContainer">
-                        <div id="mediaPreview"></div>
-                        <button class="remove-btn" id="removeMediaBtn"><i class="fa-solid fa-xmark"></i></button>
+                        <div class="slide-view">
+                            <button class="slide-nav prev-slide" id="prevSlideBtn"><i class="fa-solid fa-chevron-left"></i></button>
+                            <div class="slide-main-content" id="slideMainContent"></div>
+                            <button class="slide-nav next-slide" id="nextSlideBtn"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <div class="thumbnail-strip">
+                            <div class="preview-grid" id="previewGrid"></div>
+                            <button class="add-more-btn" id="addMoreMediaBtn" title="Thêm tập tin"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="remove-all-btn" id="removeMediaBtn" title="Xóa tất cả"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
 
@@ -164,6 +172,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>

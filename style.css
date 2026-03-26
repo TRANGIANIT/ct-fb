@@ -182,6 +182,13 @@ header p {
     background: rgba(0, 240, 255, 0.05);
 }
 
+.upload-zone.has-media {
+    min-height: 450px;
+    border-color: transparent;
+    cursor: default;
+    background: transparent;
+}
+
 .upload-content i {
     font-size: 3rem;
     color: var(--text-muted);
@@ -204,48 +211,153 @@ header p {
     font-weight: 500;
 }
 
-/* Preview */
+/* Preview Container */
 .preview-container {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 17, 26, 0.9);
+    background: rgba(15, 17, 26, 0.95);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+    padding: 10px;
+}
+
+/* Slide View */
+.slide-view {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 5;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.5);
 }
 
-.preview-container img, .preview-container video {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: calc(var(--border-radius) - 5px);
+.slide-main-content {
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
 }
 
-.remove-btn {
+.slide-main-content img, .slide-main-content video {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+.slide-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.8); color: white; border: 1px solid rgba(255,255,255,0.4);
+    width: 60px; height: 60px; border-radius: 50%; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.6rem; transition: var(--transition); z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.slide-nav:hover { background: var(--accent); border-color: var(--accent); }
+.prev-slide { left: 10px; }
+.next-slide { right: 10px; }
+
+/* Thumbnail UI Strip */
+.thumbnail-strip {
+    height: 90px;
+    display: flex;
+    gap: 10px;
+}
+
+.preview-grid {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+    flex: 1;
+    overflow-x: auto;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.preview-item {
+    position: relative;
+    height: 100%;
+    min-width: 80px; width: 80px; /* Force width */
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+    background: black;
+    cursor: grab;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.preview-item.active-thumb {
+    border-color: #00F0FF;
+    transform: scale(1.03);
+}
+
+.preview-item:active { cursor: grabbing; }
+
+.preview-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+    border: 2px dashed #00F0FF;
+}
+
+.add-more-btn {
+    height: calc(100% - 10px); width: 80px; min-width: 80px; margin-top: 5px;
+    border: 2px dashed rgba(255,255,255,0.4); border-radius: 6px;
+    background: transparent; color: white; cursor: pointer;
+    font-size: 1.5rem; display: flex; justify-content: center; align-items: center;
+    transition: var(--transition);
+}
+.add-more-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,240,255,0.1); }
+
+
+.preview-grid img, .preview-grid video {
+    height: 100%;
+    width: auto;
+    object-fit: cover;
+    pointer-events: none; /* Tránh xung đột Drag mặc định của trình duyệt với thẻ IMG */
+}
+
+.drag-handle {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    bottom: 5px;
+    left: 5px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.remove-single-btn {
+    position: absolute;
+    top: 5px; right: 5px;
     background: rgba(0,0,0,0.6);
     border: 1px solid rgba(255,255,255,0.2);
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    color: white; width: 25px; height: 25px;
+    border-radius: 50%; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
     transition: var(--transition);
-    backdrop-filter: blur(5px);
     z-index: 10;
 }
-
-.remove-btn:hover {
-    background: #ff3366;
-    border-color: #ff3366;
-    transform: scale(1.1) rotate(90deg);
+.remove-single-btn:hover {
+    background: #ff3366; border-color: #ff3366;
 }
+
+.remove-all-btn {
+    position: absolute;
+    top: 10px; left: 10px; /* moved to left */
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    display: flex; justify-content: center; align-items: center; transition: var(--transition);
+    z-index: 10;
+}
+.remove-all-btn:hover { background: #ff3366; border-color: #ff3366; transform: scale(1.1) rotate(90deg); }
 
 /* Themes */
 .theme-selector {

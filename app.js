@@ -4,9 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
     const uploadContent = document.getElementById('uploadContent');
     const previewContainer = document.getElementById('previewContainer');
-    const mediaPreview = document.getElementById('mediaPreview');
     const removeMediaBtn = document.getElementById('removeMediaBtn');
     
+    // Preview Elements
+    const slideMainContent = document.getElementById('slideMainContent');
+    const previewGrid = document.getElementById('previewGrid');
+    const prevSlideBtn = document.getElementById('prevSlideBtn');
+    const nextSlideBtn = document.getElementById('nextSlideBtn');
+    const addMoreMediaBtn = document.getElementById('addMoreMediaBtn');
+
     const themeBtns = document.querySelectorAll('.theme-btn');
     const customThemeContainer = document.getElementById('customThemeContainer');
     const customThemeInput = document.getElementById('customThemeInput');
@@ -33,7 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Global State
     let currentTheme = 'review';
     let hasMedia = false;
-    let base64Image = null; // Store image for API: data:image/...
+    let uploadedMediaFiles = []; // Mảng chứa các media: [{id, type, mimeType, base64, url}]
+    let currentSlideIndex = 0; // Trỏ vào hình ảnh lớn đang hiển thị
     let isPlaying = false;
     
     // Audio Dual State
@@ -138,69 +145,211 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         uploadZone.classList.remove('dragover');
         if (!hasMedia && e.dataTransfer.files.length) {
-            handleFiles(e.dataTransfer.files[0]);
+            handleFiles(e.dataTransfer.files);
         }
     });
 
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length) {
-            handleFiles(e.target.files[0]);
+            handleFiles(e.target.files);
         }
     });
 
-    function handleFiles(file) {
-        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-            alert('Vui lòng chọn file hình ảnh hoặc video hợp lệ!');
+    function handleFiles(files) {
+        let validFiles = Array.from(files).filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+        if (validFiles.length === 0) {
+            alert('Vui lòng chọn các file hình ảnh hoặc video hợp lệ!');
             return;
         }
 
         uploadContent.classList.add('hidden');
         previewContainer.classList.remove('hidden');
-        
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                base64Image = e.target.result; // data:image/...
-                mediaPreview.innerHTML = `<img src="${base64Image}" alt="Preview">`;
-                hasMedia = true;
-            };
-            reader.readAsDataURL(file);
-        } else {
-            // Video extraction logic
-            const videoUrl = URL.createObjectURL(file);
-            const video = document.createElement('video');
-            video.src = videoUrl;
-            video.muted = true;
-            video.controls = true;
-            
-            mediaPreview.innerHTML = '';
-            mediaPreview.appendChild(video);
-            
-            hasMedia = true;
+        uploadZone.classList.add('has-media');
+        hasMedia = true;
 
-            // Extract frame after loaded metadata
-            video.addEventListener('loadeddata', () => {
-                video.currentTime = Math.min(1, video.duration / 2); // Seek to middle or 1s
+        validFiles.forEach(file => {
+            const id = Date.now().toString() + Math.random().toString();
+            
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fullBase64 = e.target.result;
+                    const mimeType = fullBase64.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)[1];
+                    const base64Data = fullBase64.split(',')[1];
+                    
+                    uploadedMediaFiles.push({ id, type: 'image', mimeType, base64: base64Data, url: fullBase64 });
+                    renderPreviews();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Video extraction logic
+                const videoUrl = URL.createObjectURL(file);
+                const video = document.createElement('video');
+                video.src = videoUrl;
+                video.muted = true;
+                
+                video.addEventListener('loadeddata', () => {
+                    video.currentTime = Math.min(1, video.duration / 2);
+                });
+
+                video.addEventListener('seeked', () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const base64Full = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    uploadedMediaFiles.push({ 
+                        id, type: 'video', 
+                        mimeType: 'image/jpeg', 
+                        base64: base64Full.split(',')[1], 
+                        url: base64Full 
+                    });
+                    renderPreviews();
+                }, { once: true });
+            }
+        });
+    }
+
+    // Add More Media Button
+    addMoreMediaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
+
+    // Slider Controls
+    prevSlideBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentSlideIndex > 0) {
+            currentSlideIndex--;
+            renderPreviews();
+        }
+    });
+
+    nextSlideBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentSlideIndex < uploadedMediaFiles.length - 1) {
+            currentSlideIndex++;
+            renderPreviews();
+        }
+    });
+
+    function renderPreviews() {
+        if (uploadedMediaFiles.length === 0) {
+            removeMediaBtn.click();
+            return;
+        }
+
+        // Đảm bảo chỉ mục hợp lệ
+        if (currentSlideIndex >= uploadedMediaFiles.length) {
+            currentSlideIndex = Math.max(0, uploadedMediaFiles.length - 1);
+        }
+
+        // --- Render Main Slide ---
+        const mainMedia = uploadedMediaFiles[currentSlideIndex];
+        slideMainContent.innerHTML = `<img src="${mainMedia.url}" alt="Main Slide">`; // Hoặc video
+        
+        // Cập nhật mũi tên
+        prevSlideBtn.style.opacity = currentSlideIndex > 0 ? '1' : '0.3';
+        prevSlideBtn.style.pointerEvents = currentSlideIndex > 0 ? 'auto' : 'none';
+        
+        nextSlideBtn.style.opacity = currentSlideIndex < uploadedMediaFiles.length - 1 ? '1' : '0.3';
+        nextSlideBtn.style.pointerEvents = currentSlideIndex < uploadedMediaFiles.length - 1 ? 'auto' : 'none';
+
+        // --- Render Thumbnail Grid ---
+        previewGrid.innerHTML = '';
+        
+        uploadedMediaFiles.forEach((media, index) => {
+            const el = document.createElement('div');
+            el.className = `preview-item ${index === currentSlideIndex ? 'active-thumb' : ''}`;
+            el.draggable = true;
+            el.dataset.id = media.id;
+            el.innerHTML = `
+                <img src="${media.url}" alt="Preview" draggable="false">
+                <button class="remove-single-btn" data-id="${media.id}" title="Xóa hình này"><i class="fa-solid fa-xmark"></i></button>
+                <div class="drag-handle"><i class="fa-solid fa-grip-vertical"></i> ${index + 1}</div>
+            `;
+            
+            // Xử lý khi bấm vào thumbnail để chuyển Slide
+            el.addEventListener('click', (e) => {
+                if(!e.target.closest('.remove-single-btn') && !e.target.closest('.drag-handle')) {
+                    currentSlideIndex = index;
+                    renderPreviews();
+                }
             });
 
-            video.addEventListener('seeked', () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                base64Image = canvas.toDataURL('image/jpeg', 0.8);
-            }, { once: true });
-        }
+            previewGrid.appendChild(el);
+        });
+
+        // Xóa lẻ thumbnail
+        previewGrid.querySelectorAll('.remove-single-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                uploadedMediaFiles = uploadedMediaFiles.filter(m => m.id !== btn.dataset.id);
+                renderPreviews();
+            });
+        });
+
+        // --- Drag & Drop Sync Logic ---
+        const draggables = previewGrid.querySelectorAll('.preview-item');
+        
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', () => draggable.classList.add('dragging'));
+
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+                
+                const activeId = uploadedMediaFiles[currentSlideIndex]?.id; // Giữ lại ID ảnh đang xem lớn
+                
+                // Cập nhật lại array
+                const currentIds = Array.from(previewGrid.querySelectorAll('.preview-item')).map(el => el.dataset.id);
+                const syncedMediaFiles = currentIds.map(id => uploadedMediaFiles.find(m => m.id === id)).filter(Boolean);
+                uploadedMediaFiles = syncedMediaFiles;
+                
+                // Khôi phục slide index mới khớp với ảnh đang được xem
+                if (activeId) {
+                    currentSlideIndex = uploadedMediaFiles.findIndex(m => m.id === activeId);
+                }
+                
+                renderPreviews();
+            });
+        });
+
+        previewGrid.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(previewGrid, e.clientX);
+            const draggable = document.querySelector('.dragging');
+            if (draggable) {
+                if (afterElement == null) previewGrid.appendChild(draggable);
+                else previewGrid.insertBefore(draggable, afterElement);
+            }
+        });
+    }
+
+    function getDragAfterElement(container, x) {
+        const draggableElements = [...container.querySelectorAll('.preview-item:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = x - box.left - box.width / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     removeMediaBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         fileInput.value = '';
-        mediaPreview.innerHTML = '';
+        slideMainContent.innerHTML = '';
+        previewGrid.innerHTML = '';
         previewContainer.classList.add('hidden');
         uploadContent.classList.remove('hidden');
+        uploadZone.classList.remove('has-media');
         hasMedia = false;
-        base64Image = null;
+        uploadedMediaFiles = [];
+        currentSlideIndex = 0;
         resultPanel.classList.add('hidden');
         resetAllAudio();
     });
@@ -243,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === Generate Logic API Call ===
-    async function generateContentAI(apiKey, imageBase, theme) {
+    async function generateContentAI(apiKey, mediaArray, theme) {
         let themeContext = '';
         if (theme === 'custom') {
             const val = customThemeInput.value.trim();
@@ -252,11 +401,17 @@ document.addEventListener('DOMContentLoaded', () => {
             themeContext = themePrompts[theme];
         }
 
-        const promptText = `Bạn là một chuyên gia sáng tạo nội dung mạng xã hội (Viral Content Creator) hàng đầu. Hãy quan sát bức ảnh đính kèm và:\n${themeContext}\n\nHãy viết một bài đăng Facebook/TikTok hoàn chỉnh khoảng 10-15 câu ngắn ngọn, có emoji và hashtags phù hợp, lôi cuốn được người xem. Trả về ĐÚNG phần nội dung caption, tuyệt đối không thêm câu dạ vâng, chào hỏi hay phân tích.`;
+        const promptText = `Bạn là một chuyên gia sáng tạo nội dung mạng xã hội (Viral Content Creator) hàng đầu. Hãy quan sát tập hợp ảnh đính kèm và:\n${themeContext}\n\nHãy viết một bài đăng Facebook/TikTok hoàn chỉnh khoảng 10-15 câu ngắn ngọn, có emoji và hashtags phù hợp, lôi cuốn được người xem. Nếu có nhiều ảnh, hãy tổng hợp ý tưởng từ toàn bộ nhóm ảnh đó. Trả về ĐÚNG phần nội dung caption, tuyệt đối không thêm câu dạ vâng, chào hỏi hay phân tích.`;
 
-        // Parse base64
-        const mimeType = imageBase.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)[1];
-        const base64Data = imageBase.split(',')[1];
+        // Push text prompt first
+        const partsPayload = [ { text: promptText } ];
+        
+        // Trộn các hình ảnh vào payload cho Google Gemini
+        mediaArray.forEach(media => {
+            partsPayload.push({
+                inlineData: { mimeType: media.mimeType, data: media.base64 }
+            });
+        });
         
         // Auto - Fetch model valid for this specific key
         const modelName = await getAvailableModel(apiKey);
@@ -266,10 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 contents: [{
-                    parts: [
-                        { text: promptText },
-                        { inlineData: { mimeType: mimeType, data: base64Data } } // fix: inlineData (camelCase)
-                    ]
+                    parts: partsPayload
                 }]
             })
         });
@@ -356,8 +508,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Generate Button Action ===
     generateBtn.addEventListener('click', async () => {
-        if (!hasMedia || !base64Image) {
-            alert('Vui lòng tải lên một hình ảnh hoặc chờ hệ thống load xong video!');
+        if (!hasMedia || uploadedMediaFiles.length === 0) {
+            alert('Vui lòng tải lên tài liệu hình ảnh hoặc chờ hệ thống load xong video!');
             return;
         }
 
@@ -371,12 +523,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resultPanel.classList.remove('hidden');
         resultPanel.style.opacity = '0.5';
         
-        resultText.value = 'Hệ thống Gemini 1.5 đang quét hình ảnh và sáng tạo nội dung... Vui lòng đợi trong giây lát...';
+        resultText.value = 'Hệ thống Gemini 1.5 đang quét phân tích loạt hình ảnh và sáng tạo nội dung... Vui lòng đợi trong giây lát...';
         resetAllAudio(); // Clear existings
 
         try {
-            // 1. Generate Text (Gemini 1.5 Flash Vision)
-            const textContent = await generateContentAI(apiKey, base64Image, currentTheme);
+            // 1. Generate Text (Gemini 1.5 Flash Vision Multimodal)
+            const textContent = await generateContentAI(apiKey, uploadedMediaFiles, currentTheme);
             resultText.value = textContent;
             
             // 2. Setup Audio Logic
